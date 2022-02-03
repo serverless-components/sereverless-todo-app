@@ -25,9 +25,7 @@
 -   使用腾讯云 Redis 作为 Todo 数据存储
 -   使用[tencent-http](https://github.com/serverless-components/tencent-http) + [koajs](https://koajs.com/) 作为技术选型
 
-后端项目成功部署后，会在腾讯云 scf 中自动部署一个名为`todos-backend`的项目，用户可在其中查看日志或者函数或者函数配置
-
-在腾讯云成功开通 **Redis** 数据库之后，在项目根目录新建 `.env` 文件，然后将数据库的 `host, port, password` 存在`.env`, 同时需要将配置的**所属网络(必须在广州)，所属子网**的字段配置在`.env`中:
+首先需要手动在腾讯云开通和配置**redis**数据库, 参考: https://cloud.tencent.com/document/product/239/30821。 在腾讯云成功开通 **Redis** 数据库之后，在项目根目录新建 `.env` 文件，然后将数据库的 `host, port, password` 存在`.env`, 同时需要将配置的**所属网络(必须在和项目所在区域相同)，所属子网**的字段配置在`.env`中:
 
 ```bash
 redis_port=xxxx
@@ -36,6 +34,8 @@ redis_password=xxxx
 vpcId=xxxx
 subnetId=xxxx
 ```
+
+后端项目成功部署后，会在腾讯云 scf 中自动部署一个名为`todos-backend`的项目，用户可在其中查看日志或者函数配置
 
 **注意事项**:
 
