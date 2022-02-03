@@ -35,12 +35,21 @@ function App() {
 
   return (
     <div className="app">
+      <h1>
+        使用 Serverless + Tencent Cloud 构建的
+        <a href="https://github.com/serverless-components/sereverless-todo-app">
+          待办事项
+        </a>
+      </h1>
       <Filters filter={filter} setFilter={setFilter} />
       <div className="todos">
         <List
+          locale={{ emptyText: "当前没有Todo数据，请新建" }}
           loading={listLoading}
           dataSource={filteredTodos}
-          renderItem={(todo) => <Todo todo={todo} getTodos={getTodos} />}
+          renderItem={(todo) => (
+            <Todo key={todo.id} todo={todo} getTodos={getTodos} />
+          )}
         />
       </div>
       <AddTodo getTodos={getTodos} />

@@ -7,14 +7,21 @@
 3. [注册](https://cloud.tencent.com/register)腾讯云账号并[开通](https://cloud.tencent.com/document/product/1154/43006)权限
 4. 开通[腾讯云 Redis 数据库](https://cloud.tencent.com/document/product/239/30821)
 
+### 使用流程
+
+-   根目录中新建 `.env`文件，填写`redis` 数据库信息，以及网络配置, 具体步骤和架构请参考下面的**项目架构**部分
+-   根目录执行 `sls deploy`, 命令行会自动分别部署`backend, frontend` 项目
+-   打开 `todos-frontend` 输出的 `website` 地址即可看到项目前端，进行操作
+
 ### 项目架构
 
 此 **Todo List** 项目采取前后端分离的架构，前端提供页面 Ui 展示和功能操作， 后端提供 API 和数据库操作. 项目提供了:
 
 1. 新增 Todo
-2. 切换 Todo*完成*状态
+2. 切换 Todo 状态
 3. 修改 Todo 信息
 4. 删除 Todo
+5. 为 Todo 添加截至日期
 
 根目录`serverless.yml`定义了`app, stage` 字段，因为需要确保模版下的组件使用相同的`app, stage` 字段，用户可自行修改需要的值
 
@@ -25,7 +32,7 @@
 -   使用腾讯云 Redis 作为 Todo 数据存储
 -   使用[tencent-http](https://github.com/serverless-components/tencent-http) + [koajs](https://koajs.com/) 作为技术选型
 
-首先需要手动在腾讯云开通和配置**redis**数据库, 参考: https://cloud.tencent.com/document/product/239/30821。 在腾讯云成功开通 **Redis** 数据库之后，在项目根目录新建 `.env` 文件，然后将数据库的 `host, port, password` 存在`.env`, 同时需要将配置的**所属网络(必须在和项目所在区域相同)，所属子网**的字段配置在`.env`中:
+首先需要手动在腾讯云开通和配置**redis**数据库, 参考: https://cloud.tencent.com/document/product/239/30821。 在腾讯云成功开通 **Redis** 数据库之后，在项目根目录新建 `.env` 文件，然后将数据库的 `host, port, password` 存在`.env`, 同时需要将配置的**所属网络(必须和项目所在区域相同)，所属子网**的字段配置在`.env`中:
 
 ```bash
 redis_port=xxxx
@@ -52,12 +59,6 @@ subnetId=xxxx
 `frontend/serverless.yml` 中使用了`backend` 项目提供的后端 ApiUrl`${output:${stage}:${app}:todos-backend.apigw.url}`, 其中`todos-backend` 是后端项目的名称，如果后端项目的名称被修改，前端`yml`中此处的值需要对应修改。 可以做到无缝部署，不需要分别部署.
 前端项目部署之后会将静态资源存在 COS 的`todos-frontend`bucket 中，可以自行在`serverless.yml`中修改
 
-### 使用流程
-
--   根目录中新建 `.env`文件，填写 `redis` 数据库信息，以及网络配置
--   根目录执行 `sls deploy`
--   打开 `todos-frontend` 输出的 `website` 地址即可看到项目前端，进行操作
-
 #### 本地开发
 
 1. `sls deploy` 之后，会在用户的`todos-frontend` bucket 生成一个 `env.js` 文件，需要将其下载到`frontend/public` 文件夹中。 之所以在本地开发的时候需要这个文件是因为这个文件会把后端 API 的地址自动注入`window.env` 中，供前端 API 访问使用， 所以本地开发的时候需要手动下载。 线上项目会自动获取。
@@ -71,3 +72,4 @@ subnetId=xxxx
 -   展示已完成数据: ![](./assets/todo-completed.png)
 -   展示未完成数据: ![](./assets/todo-incompleted.png)
 -   数据编辑: ![](./assets/todo-edit.png)
+-   **超过**截止日期还**未完成**的 Todo, 显示**红色提醒图标**: ![](./assets/dueDate.png)

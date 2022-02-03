@@ -8,8 +8,14 @@
 
 .todoContent {
     flex: 1;
+    border-bottom: 1px dotted #ccc;
+    margin-right: 10px;
 }
 
-.todoDel {
-    width: 50;
+.todoDueDate {
+    min-width: 200px;
+}
+
+.todoItem button {
+    margin: 0 6px;
 }

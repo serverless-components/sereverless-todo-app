@@ -33,6 +33,7 @@ export const addTodo = async (message) => {
         updated: t,
         completed: false,
         id: uuidv4(),
+        dueDate: null,
     });
     await client.set("todos", JSON.stringify(todos));
 };
