@@ -1,0 +1,11 @@
+.filters {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 80%;
+}
+
+.filter-item {
+    width: 70px;
+    margin-left: 10px;
+}

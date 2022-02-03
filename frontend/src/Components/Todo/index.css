@@ -1,0 +1,15 @@
+.todoItem {
+    display: flex;
+}
+
+.todoCheckbox {
+    width: 40px;
+}
+
+.todoContent {
+    flex: 1;
+}
+
+.todoDel {
+    width: 50;
+}
