@@ -1,62 +1,51 @@
-import ioredis from "ioredis";
+import knex from "knex";
 import { v4 as uuidv4 } from "uuid";
 
-const client = new ioredis({
-    port: Number(process.env.redis_port),
-    host: process.env.redis_host,
-    password: process.env.redis_password,
-    family: 4,
-    db: 0,
+const client = knex({
+    client: "pg",
+    connection: process.env.dbConnUrl,
+    searchPath: ["public"],
 });
 
-export const listTodos = async (sort = { index: "created", order: "desc" }) => {
-    let todos = await client.get("todos");
-    if (!todos) {
-        return [];
+const TABLE_NAME = "todos";
+
+export const checkDBTable = async () => {
+    if (!(await client.schema.hasTable(TABLE_NAME))) {
+        await client.schema.createTable(TABLE_NAME, (table) => {
+            table.text("message").notNullable();
+            table.timestamp("created").defaultTo(client.fn.now()).notNullable();
+            table.timestamp("updated").defaultTo(client.fn.now()).notNullable();
+            table.boolean("completed").defaultTo(false).notNullable();
+            table.text("id").notNullable();
+            table.string("dueDate"); // default limit 255 length
+        });
+        console.log(`create table ${TABLE_NAME} successfully!!`);
     }
-    const { order, index } = sort;
-    const result = JSON.parse(todos).sort((a, b) => {
-        if (order === "desc") {
-            return a[index] - b[index];
-        }
-        return b[index] - a[index];
-    });
-    return result;
+};
+
+export const listTodos = async (sort = {}) => {
+    const { index = "created", order = "desc" } = sort;
+
+    const res = await client.select().from(TABLE_NAME).orderBy(index, order);
+    return res;
 };
 
 export const addTodo = async (message) => {
-    const todos = await listTodos();
-    const t = Date.now();
-    todos.push({
+    await client(TABLE_NAME).insert({
         message,
-        created: t,
-        updated: t,
-        completed: false,
         id: uuidv4(),
-        dueDate: null,
     });
-    await client.set("todos", JSON.stringify(todos));
 };
 
 export const updateTask = async (id, payload) => {
-    const todos = await listTodos();
-    const newTodos = todos.map((item) => {
-        if (item.id === id) {
-            return {
-                ...item,
-                ...payload,
-                updated: Date.now(),
-            };
-        }
-        return item;
-    });
-
-    await client.set("todos", JSON.stringify(newTodos));
+    await client(TABLE_NAME)
+        .where("id", id)
+        .update({
+            ...payload,
+            updated: new Date().toISOString(),
+        });
 };
 
 export const deleteTodo = async (id) => {
-    const todos = await listTodos();
-    const newTodos = todos.filter((item) => item.id !== id);
-
-    await client.set("todos", JSON.stringify(newTodos));
+    await client(TABLE_NAME).where("id", id).del();
 };

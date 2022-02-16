@@ -12,15 +12,11 @@ inputs:
     name: ${name}
     installDependency: true
     vpc:
-      vpcId: ${env:vpcId}
-      subnetId: ${env:subnetId}
+      vpcId: ${output:${stage}:${app}:todos-vpc.vpcId}
+      subnetId: ${output:${stage}:${app}:todos-vpc.subnetId}
     environments:
-      - key: redis_port
-        value: ${env:redis_port}
-      - key: redis_host
-        value: ${env:redis_host}
-      - key: redis_password
-        value: ${env:redis_password}
+      - key: dbConnUrl
+        value: ${output:${stage}:${app}:todos-db.private.connectionString}
   apigw:
     api:
       cors: true

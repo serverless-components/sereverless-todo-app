@@ -1,17 +1,14 @@
 ## 基于 Serverless CLI 和腾讯云的 Todo List 应用
 
+-   [x] **0 配置**: 可以直接使用默认配置完成整个项目的部署
+-   [x] **一键部署**: 只需要准备必要的前置条件，即可在根目录一条命令完成所有服务部署
+
 ### 前置条件
 
 1. `Node.js` >= 12
 2. [安装](https://cn.serverless.com/framework/docs-getting-started) `serverless` 命令行工具
 3. [注册](https://cloud.tencent.com/register)腾讯云账号并[开通](https://cloud.tencent.com/document/product/1154/43006)权限
 4. 开通[腾讯云 Redis 数据库](https://cloud.tencent.com/document/product/239/30821)
-
-### 使用流程
-
--   根目录中新建 `.env`文件，填写`redis` 数据库信息，以及网络配置, 具体步骤和架构请参考下面的**项目架构**部分
--   根目录执行 `sls deploy`, 命令行会自动分别部署`backend, frontend` 项目
--   打开 `todos-frontend` 输出的 `website` 地址即可看到项目前端，进行操作
 
 ### 项目架构
 
@@ -25,29 +22,42 @@
 
 根目录`serverless.yml`定义了`app, stage` 字段，因为需要确保模版下的组件使用相同的`app, stage` 字段，用户可自行修改需要的值
 
+#### VPC 配置结构
+
+`vpc` 目录下是帮助用户执行创建 **db** 和 **backend** 所需要的网络环境, 所创建的**vpcId**和**subnetId**提供给**db**和**backend**使用，用户可以自行修改，但是如果继续给**db, backend** 使用的话，**必须保证地域配置的正确性**, 比如**postgresql** 仅支持 `北京三区，广州二区，上海二区`, 那么`vpc/serverless.yml` 就必须选择这三个地域之一。
+
+#### 数据库结构
+
+*db*目录下是使用[tencent-postgresql](https://github.com/serverless-components/tencent-postgresql) 组件来执行对 postgresql 数据库的创建
+
+部署成功之后，可以在腾讯云云数据库中的*PostgreSQL* 中看到对应实例.
+
+**注意事项**:
+
+1. 当前 _PGSQL for Serverless_ 仅支持 `北京三区，广州二区，上海二区` 三个地域的创建和部署:
+    1. 在填写 `backend/serverless.yml` 中的地域可用区时需要注意填写为正确的地域
+    2. `backend/serverless.yml` 中我们所使用的`vpc`配置 是在*vpc*目录下生成的结果: `${output:${stage}:${app}:todos-vpc.vpcId}`，所以需要确保`vpc`目录实例下的地域选择为正确的地域
+2. ⚠️⚠️ PostgreSQL 组件当前暂不支持 CLI 扫描二维码登录，因此您需要配置[全局认证信息](https://cn.serverless.com/framework/docs-commands-credentials)或者在根目录`.env` 文件中填写信息来配置持久的环境变量/秘钥信息, [详情](https://github.com/serverless-components/tencent-postgresql#4-%E8%B4%A6%E5%8F%B7%E9%85%8D%E7%BD%AE)
+
+```bash
+# .env
+TENCENT_SECRET_ID=123
+TENCENT_SECRET_KEY=123
+```
+
 #### 后端结构
 
 `backend` 文件夹中即为后端项目目录:
 
--   使用腾讯云 Redis 作为 Todo 数据存储
+-   使用上面配置的的**db**实例的输出作为数据库的 url 来实现对应`todo` 数据存储
 -   使用[tencent-http](https://github.com/serverless-components/tencent-http) + [koajs](https://koajs.com/) 作为技术选型
-
-首先需要手动在腾讯云开通和配置**redis**数据库, 参考: https://cloud.tencent.com/document/product/239/30821。 在腾讯云成功开通 **Redis** 数据库之后，在项目根目录新建 `.env` 文件，然后将数据库的 `host, port, password` 存在`.env`, 同时需要将配置的**所属网络(必须和项目所在区域相同)，所属子网**的字段配置在`.env`中:
-
-```bash
-redis_port=xxxx
-redis_host=xxxx
-redis_password=xxxx
-vpcId=xxxx
-subnetId=xxxx
-```
-
-后端项目成功部署后，会在腾讯云 scf 中自动部署一个名为`todos-backend`的项目，用户可在其中查看日志或者函数配置
 
 **注意事项**:
 
--   Redis 数据库的开通地域需要和项目的部署地域相同，比如`backend/serverless.yml` 中的**region**为*shanghai*, Redis 也需要在*shanghai*地域开通，并且保证配置合理互通的网络，[参考](https://cloud.tencent.com/document/product/239/30910)
--   要为 redis 配置网络的话，需要有一个和 redis 所属地区完全相同的网络配置才可以找到。比如 Redis 在上海一区，那么需要有一个属于上海一区的子网，才可以为 redis 进行分配。
+1. `backend/serverless.yml`中使用了`db`项目提供的数据库链接: `${output:${stage}:${app}:todos-db.private.connectionString}`, 其中`todos-db`是数据库实例项目的名称，如果`db/serverless.yml` 中的*name* 被修改，请记得把这里的参数也相应修改。
+2. `backend/serverless.yml` 中我们所使用的`vpc`配置 是在*vpc*目录下生成的结果: `${output:${stage}:${app}:todos-vpc.vpcId}`，所以需要确保`vpc`目录实例下的地域选择为正确的地域
+
+后端项目成功部署后，会在腾讯云 scf 中自动部署一个名为`todos-backend`的项目，用户可在其中查看日志或者函数配置
 
 #### 前端结构
 
@@ -64,6 +74,11 @@ subnetId=xxxx
 1. `sls deploy` 之后，会在用户的`todos-frontend` bucket 生成一个 `env.js` 文件，需要将其下载到`frontend/public` 文件夹中。 之所以在本地开发的时候需要这个文件是因为这个文件会把后端 API 的地址自动注入`window.env` 中，供前端 API 访问使用， 所以本地开发的时候需要手动下载。 线上项目会自动获取。
 2. 进入`frontend`文件夹下，执行`npm install` 安装依赖
 3. 执行 `npm start` 本地运行项目
+
+### 使用流程
+
+-   根目录执行 `sls deploy`, 命令行会自动分别部署`db, backend, frontend` 项目
+-   打开 `todos-frontend` 输出的 `website` 地址即可看到项目前端，进行操作
 
 ### 效果截图
 

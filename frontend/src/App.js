@@ -37,7 +37,7 @@ function App() {
     <div className="app">
       <h1>
         使用 Serverless + Tencent Cloud 构建的
-        <a href="https://github.com/serverless-components/sereverless-todo-app">
+        <a href="https://github.com/serverless-components/tencent-todo-app">
           待办事项
         </a>
       </h1>

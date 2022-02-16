@@ -2,8 +2,15 @@ import Koa from "koa";
 import KoaRouter from "koa-router";
 import koaBody from "koa-body";
 
-import { deleteTodo, updateTask, listTodos, addTodo } from "./db.js";
+import {
+  checkDBTable,
+  deleteTodo,
+  updateTask,
+  listTodos,
+  addTodo,
+} from "./db.js";
 
+await checkDBTable();
 const app = new Koa();
 const router = new KoaRouter();
 
